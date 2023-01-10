@@ -13,6 +13,9 @@ const GenerateBase = () => {
     let bmp_mini = new Bitmap(sizeImg.width / 2, sizeImg.height / 2);
     let bmp_max = new Bitmap(sizeImg.width * 2, sizeImg.height * 2);
 
+    let bmp_fixed = new Bitmap(5, 5);
+    let bmp_many = new Bitmap(sizeImg.width * 100, sizeImg.height * 5);
+
     // let encodeImgFileAsUrl = (element: File) => {
     //     let reader = new FileReader();
     //     reader.onloadend = () => {
@@ -50,7 +53,6 @@ const GenerateBase = () => {
                     array_color = [];
                 }
             }
-
             // negative this img
             // for (let j = 0; j < bmp.height; j++) {
             //     for (let i = 0; i < bmp.width; i++) {
@@ -66,10 +68,34 @@ const GenerateBase = () => {
             //     }
             // }
 
+            // org bmp -> many mini bmp
+            let miniSquaresArray: {}[] = [];
+            let f: number[][][] = [];
+            let size_square = 5;
+            let square_width = bmp.width - bmp_fixed.width + 1;
+            let square_height = bmp.height - bmp_fixed.height + 1;
+            let counter = 0;
+            for (let h = 0; h < square_height; h++) {
+                for (let w = 0; w < square_width; w++) {
 
-            
+                    for (let i = 0; i < bmp_fixed.height; i++) {
+                        f[i]=[];
+                        for (let j = 0; j < bmp_fixed.width; j++) {
+                            bmp_many.pixel[i + counter][j] = bmp.pixel[w + i][h + j];
 
-            //
+                            f[i][j] = bmp.pixel[w + i][h + j];
+
+                        }
+                    }
+                    miniSquaresArray.push({
+                        data: [...f],
+                    })
+                    counter = counter + size_square + 1;
+                    f = [];
+                }
+            }
+            console.log(miniSquaresArray)
+
             // // bmp org -> bmp max
             // for (let j = 0; j < bmp_max.height; j++) {
             //     for (let i = 0; i < bmp_max.width; i++) {
@@ -78,7 +104,8 @@ const GenerateBase = () => {
             // }
 
             //console.log(bmp_mini)
-            //console.log(bmp)
+            // console.log(bmp)
+            // console.log(bmp_fixed)
         }
     }
 
@@ -86,7 +113,7 @@ const GenerateBase = () => {
     createImg()
 
     return (
-        <>
+        <div style={{backgroundColor: 'black'}}>
 
             <input type="file" onChange={(e) => {
                 let fileList = e.target.files;
@@ -95,19 +122,22 @@ const GenerateBase = () => {
                     imgToCanvasAsBitmap(fileList[0]);
                 }
             }}/>
+            {/*<div>*/}
+            {/*    <img src={`${bmp_mini.dataURL()}`}/>*/}
+            {/*</div>*/}
             <div>
-                <img src={`${bmp_mini.dataURL()}`}/>
+                <img src={`${bmp.dataURL()}`} style={{imageRendering: 'pixelated'}}/>
             </div>
             <div>
-                <img src={`${bmp.dataURL()}`}/>
+                <img src={`${bmp_many.dataURL()}`} style={{imageRendering: 'pixelated'}}/>
             </div>
-            <div>
-                <img src={`${bmp_max.dataURL()}`}/>
-            </div>
+            {/*<div>*/}
+            {/*    <img src={`${bmp_max.dataURL()}`}/>*/}
+            {/*</div>*/}
             {/*<div style={{margin: "20px 10px"}}>*/}
             {/*    {urlImg && <img src={`${urlImg}`} width="400px" height="400px"/>}*/}
             {/*</div>*/}
-        </>
+        </div>
     )
 }
 
