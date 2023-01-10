@@ -10,6 +10,8 @@ const GenerateBase = () => {
     let ctx = canvas.getContext('2d');
 
     let bmp = new Bitmap(sizeImg.width, sizeImg.height);
+    let bmp_mini = new Bitmap(sizeImg.width / 2, sizeImg.height / 2);
+    let bmp_max = new Bitmap(sizeImg.width * 2, sizeImg.height * 2);
 
     // let encodeImgFileAsUrl = (element: File) => {
     //     let reader = new FileReader();
@@ -34,28 +36,50 @@ const GenerateBase = () => {
             return bitmap
         });
     }
-    //console.log(bitmapImg);
 
     let createImg = () => {
         if (bitmapImg !== undefined) {
-            let canal = 0;
-            let r = [];
-            for (let y = 0; y < sizeImg.height; y++) {
-                for (let x = 0; x < sizeImg.width; x++) {
-                    for (let c = 0; c < 4; c ++) {
+            let array_color = [];
+            for (let y = 0; y < bmp.height; y++) {
+                for (let x = 0; x < bmp.width; x++) {
+                    for (let c = 0; c < 4; c++) {
                         let indexBitmapImg = 4 * (y * sizeImg.width + x) + c;
-                        r.push(bitmapImg[indexBitmapImg]/255);
+                        array_color.push(bitmapImg[indexBitmapImg] / 255);
                     }
-                    bmp.pixel[x][y] = r;
-                    r = [];
+                    bmp.pixel[x][y] = array_color;
+                    array_color = [];
                 }
             }
-            console.log(bmp)
 
+            // negative this img
+            // for (let j = 0; j < bmp.height; j++) {
+            //     for (let i = 0; i < bmp.width; i++) {
+            //         for (let c = 0; c < 3; c++) {
+            //             bmp.pixel[i][j][c] = 1 - bmp.pixel[i][j][c]
+            //         }
+            //     }
+            // }
+            // // bmp org -> bmp mini
+            // for (let j = 0; j < bmp_mini.height; j++) {
+            //     for (let i = 0; i < bmp_mini.width; i++) {
+            //         bmp_mini.pixel[i][j] = bmp.pixel[i * 2][j * 2];
+            //     }
+            // }
+
+
+            
+
+            //
+            // // bmp org -> bmp max
+            // for (let j = 0; j < bmp_max.height; j++) {
+            //     for (let i = 0; i < bmp_max.width; i++) {
+            //         bmp_max.pixel[i][j] = bmp.pixel[Math.floor(i / 2)][Math.floor(j / 2)];
+            //     }
+            // }
+
+            //console.log(bmp_mini)
+            //console.log(bmp)
         }
-
-
-
     }
 
 
@@ -71,7 +95,15 @@ const GenerateBase = () => {
                     imgToCanvasAsBitmap(fileList[0]);
                 }
             }}/>
-            <img src={`${bmp.dataURL()}`}/>
+            <div>
+                <img src={`${bmp_mini.dataURL()}`}/>
+            </div>
+            <div>
+                <img src={`${bmp.dataURL()}`}/>
+            </div>
+            <div>
+                <img src={`${bmp_max.dataURL()}`}/>
+            </div>
             {/*<div style={{margin: "20px 10px"}}>*/}
             {/*    {urlImg && <img src={`${urlImg}`} width="400px" height="400px"/>}*/}
             {/*</div>*/}
