@@ -14,6 +14,11 @@ class MyBitmap {
         }
     };
 
+    inBounds (x: number, y: number): boolean {
+        if ( x < 0 || x >= this.width || y < 0 || y >= this.height) return false;
+        return true;
+    }
+
     getPixel (x: number, y: number) : [number, number, number, number] {
         let indexBitmapImg = 4 * (y * this.width + x);
         return [this._data[indexBitmapImg], this._data[indexBitmapImg + 1], this._data[indexBitmapImg + 2], this._data[indexBitmapImg + 3]];
