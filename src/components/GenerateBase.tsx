@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import {MyBitmap} from "./MyBitmap";
 
+
 const GenerateBase = () => {
     let [sizeImg, setSizeImg] = useState<{ width: number, height: number }>({width: 100, height: 100});
     let [bitmapImg, setBitmapImg] = useState<Uint8ClampedArray>();
@@ -13,7 +14,8 @@ const GenerateBase = () => {
     //const bmp_many = new MyBitmap(sizeImg.width * 100, 10);
 
 
-    let miniSquaresArray: {data: MyBitmap}[] = [];
+    let miniSquaresArray: { data: MyBitmap, id: number }[] = [];
+    let coupleSameSquaresArray: { [name: string]: { x: number, y: number } }[] = [];
 
     //let bmp = new Bitmap(sizeImg.width, sizeImg.height);
     // let bmp_mini = new Bitmap(sizeImg.width / 2, sizeImg.height / 2);
@@ -61,8 +63,6 @@ const GenerateBase = () => {
                 }
             }
 
-            //console.log(bmp)
-
             // negative this img
             // for (let j = 0; j < bmp.height; j++) {
             //     for (let i = 0; i < bmp.width; i++) {
@@ -79,7 +79,6 @@ const GenerateBase = () => {
             // }
 
             //org bmp -> many mini bmp
-
             let size_square = 5;
             let square_width = bmp.width - bmp_fixed.width + 1;
             let square_height = bmp.height - bmp_fixed.height + 1;
@@ -93,16 +92,18 @@ const GenerateBase = () => {
                         for (let j = 0; j < bmp_fixed.width; j++) {
                             let array_color = bmp.getPixel(w + j, h + i);
                             //bmp_many.setPixel(j + counter, i, array_color);
-                            mini_bitmaps.setPixel(j,i,array_color);
+                            mini_bitmaps.setPixel(j, i, array_color);
                         }
                     }
                     miniSquaresArray.push({
+                        id: h * mini_bitmaps.width + w,
                         data: mini_bitmaps,
                     })
                     counter = counter + size_square + 1;
-                    //f = [];
                 }
             }
+
+            //console.log(miniSquaresArray)
 
             // // bmp org -> bmp max
             // for (let j = 0; j < bmp_max.height; j++) {
@@ -111,10 +112,68 @@ const GenerateBase = () => {
             //     }
             // }
         }
+
     }
 
 
-    createImg()
+    const findSamePixel = () => {
+        let current_pixel: [number, number, number, number] = [0, 0, 0, 0];
+        let current_track_pixel: [number, number, number, number] = [0, 0, 0, 0];
+        let comparing_pixel: [number, number, number, number] = [0, 0, 0, 0];
+        let comparing_track_pixel: [number, number, number, number] = [0, 0, 0, 0];
+        let same_pixel = false;
+
+        miniSquaresArray.forEach(current => {  // текущий квадрат (ходит 2)
+            miniSquaresArray.forEach(comparing => { //сравнивающий квадрат (стоит 1)
+
+                current_pixel = current.data.getPixel(0, 0);
+
+                for (let y = -comparing.data.height + 1; y < comparing.data.height; y++) {
+                    for (let x = -comparing.data.width + 1; x < comparing.data.width; x++) {
+                        comparing_pixel = comparing.data.getPixel(x, y);
+                        same_pixel = true;
+                            for (let j = 0; j < current.data.height; j++) {
+                                for (let i = 0; i < current.data.width; i++) {
+                                    current_track_pixel = current.data.getPixel(i, j);
+
+                                    if (!comparing.data.inBounds(i + x, j + y)) {
+                                        continue
+                                    }
+
+                                    comparing_track_pixel = comparing.data.getPixel(i + x, j + y);
+
+                                    if (current_track_pixel[0] !== comparing_track_pixel[0] || current_track_pixel[1] !== comparing_track_pixel[1] || current_track_pixel[2] !== comparing_track_pixel[2]) {
+                                        same_pixel = false;
+                                        break
+                                    }
+                                }
+                            }
+
+                            if (same_pixel) {
+                                coupleSameSquaresArray.push({
+                                    current: {
+                                        x: x,
+                                        y: y
+                                    },
+                                    comparing: {
+                                        x: x,
+                                        y: y
+                                    }
+                                })
+                            }
+                            same_pixel = false;
+                        }
+                    }
+
+            })
+        })
+
+        console.log(coupleSameSquaresArray);
+    }
+
+
+    createImg();
+    findSamePixel();
 
     return (
         <div style={{backgroundColor: 'black', width: '100vw', height: '100vh'}}>
@@ -126,16 +185,14 @@ const GenerateBase = () => {
                     imgToCanvasAsBitmap(fileList[0]);
                 }
             }}/>
-            {/*<div>*/}
-            {/*    <img src={`${bmp_mini.dataURL()}`}/>*/}
-            {/*</div>*/}
             <div>
                 <div>
                     <img alt='org img' src={`${bmp.asBase64()}`} style={{imageRendering: 'pixelated'}}/>
                 </div>
 
                 {miniSquaresArray.map(c => {
-                    return <img alt='mini squares bitmap' src={`${c.data.asBase64()}`} style={{imageRendering: 'pixelated'}}/>
+                    return <img alt='mini squares bitmap' src={`${c.data.asBase64()}`}
+                                style={{imageRendering: 'pixelated'}}/>
                 })}
 
                 {/*<img src={`${bmp_many.asBase64()}`} style={{imageRendering: 'pixelated'}}/>*/}
