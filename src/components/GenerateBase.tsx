@@ -14,8 +14,7 @@ const GenerateBase = () => {
     //const bmp_many = new MyBitmap(sizeImg.width * 100, 10);
 
 
-    let miniSquaresArray: { data: MyBitmap, id: number }[] = [];
-    let coupleSameSquaresArray: { [name: string]: { x: number, y: number } }[] = [];
+    let miniSquaresArray: { data: MyBitmap, id: number, samePixel: number[][] }[] = [];
 
     //let bmp = new Bitmap(sizeImg.width, sizeImg.height);
     // let bmp_mini = new Bitmap(sizeImg.width / 2, sizeImg.height / 2);
@@ -83,7 +82,7 @@ const GenerateBase = () => {
             let square_width = bmp.width - bmp_fixed.width + 1;
             let square_height = bmp.height - bmp_fixed.height + 1;
             let counter = 0;
-
+            let sizeMatrixSamePixel = ((bmp.width - 1)+ bmp.width) * ((bmp.height - 1)+ bmp.height);
             for (let h = 0; h < square_height; h++) {
                 for (let w = 0; w < square_width; w++) {
 
@@ -95,9 +94,15 @@ const GenerateBase = () => {
                             mini_bitmaps.setPixel(j, i, array_color);
                         }
                     }
+                    let samePixel: number[][] = [];
+                    for (let k = 0; k < sizeMatrixSamePixel; k++) {
+                        samePixel.push([]);
+                    }
                     miniSquaresArray.push({
                         id: miniSquaresArray.length,
                         data: mini_bitmaps,
+                        samePixel: samePixel
+
                     })
                     counter = counter + size_square + 1;
                 }
@@ -150,16 +155,9 @@ const GenerateBase = () => {
                             }
 
                             if (same_pixel) {
-                                coupleSameSquaresArray.push({
-                                    current: {
-                                        x: x,
-                                        y: y
-                                    },
-                                    comparing: {
-                                        x: x,
-                                        y: y
-                                    }
-                                })
+                                let indexSamePixel = ((y + comparing.data.height - 1) * (comparing.data.width * 2 - 1)) + (x + comparing.data.width - 1);
+                                comparing.samePixel[indexSamePixel].push(current.id);
+
                             }
                             same_pixel = false;
                         }
@@ -168,7 +166,7 @@ const GenerateBase = () => {
             })
         })
 
-        console.log(coupleSameSquaresArray);
+        console.log(miniSquaresArray);
     }
 
 
