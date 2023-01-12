@@ -96,7 +96,7 @@ const GenerateBase = () => {
                         }
                     }
                     miniSquaresArray.push({
-                        id: h * mini_bitmaps.width + w,
+                        id: miniSquaresArray.length,
                         data: mini_bitmaps,
                     })
                     counter = counter + size_square + 1;
@@ -116,7 +116,7 @@ const GenerateBase = () => {
     }
 
 
-    const findSamePixel = () => {
+    const findSameCouplePixel = () => {
         let current_pixel: [number, number, number, number] = [0, 0, 0, 0];
         let current_track_pixel: [number, number, number, number] = [0, 0, 0, 0];
         let comparing_pixel: [number, number, number, number] = [0, 0, 0, 0];
@@ -173,7 +173,7 @@ const GenerateBase = () => {
 
 
     createImg();
-    findSamePixel();
+    findSameCouplePixel();
 
     return (
         <div style={{backgroundColor: 'black', width: '100vw', height: '100vh'}}>
