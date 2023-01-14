@@ -1,6 +1,9 @@
 import React, {useState} from "react";
 import {MyBitmap} from "./MyBitmap";
 
+function getRandomId(length: number) {
+    return Math.floor(Math.random() * length);
+}
 
 const GenerateBase = () => {
     let [sizeImg, setSizeImg] = useState<{ width: number, height: number }>({width: 100, height: 100});
@@ -9,12 +12,14 @@ const GenerateBase = () => {
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext('2d');
 
+    const bmp_generate = new MyBitmap(10, 10);
     const bmp = new MyBitmap(sizeImg.width, sizeImg.height);
     const bmp_fixed = new MyBitmap(5, 5);
     //const bmp_many = new MyBitmap(sizeImg.width * 100, 10);
 
 
     let miniSquaresArray: { data: MyBitmap, id: number, samePixel: number[][] }[] = [];
+    let preGenerateArray: number[][] = []
 
     //let bmp = new Bitmap(sizeImg.width, sizeImg.height);
     // let bmp_mini = new Bitmap(sizeImg.width / 2, sizeImg.height / 2);
@@ -79,12 +84,12 @@ const GenerateBase = () => {
 
             //org bmp -> many mini bmp
             let size_square = 5;
-            let square_width = bmp.width - bmp_fixed.width + 1;
-            let square_height = bmp.height - bmp_fixed.height + 1;
+            let squares_width = bmp.width - bmp_fixed.width + 1;
+            let squares_height = bmp.height - bmp_fixed.height + 1;
             let counter = 0;
-            let sizeMatrixSamePixel = ((bmp.width - 1)+ bmp.width) * ((bmp.height - 1)+ bmp.height);
-            for (let h = 0; h < square_height; h++) {
-                for (let w = 0; w < square_width; w++) {
+            let sizeMatrixSamePixel = ((bmp_fixed.width - 1) + bmp_fixed.width) * ((bmp_fixed.height - 1) + bmp_fixed.height);
+            for (let h = 0; h < squares_height; h++) {
+                for (let w = 0; w < squares_width; w++) {
 
                     let mini_bitmaps = new MyBitmap(bmp_fixed.width, bmp_fixed.height);
                     for (let i = 0; i < bmp_fixed.height; i++) {
@@ -103,7 +108,7 @@ const GenerateBase = () => {
                         data: mini_bitmaps,
                         samePixel: samePixel
 
-                    })
+                    });
                     counter = counter + size_square + 1;
                 }
             }
@@ -128,8 +133,8 @@ const GenerateBase = () => {
         let comparing_track_pixel: [number, number, number, number] = [0, 0, 0, 0];
         let same_pixel = false;
 
-        miniSquaresArray.forEach(current => {  // текущий квадрат (ходит 2)
-            miniSquaresArray.forEach(comparing => { //сравнивающий квадрат (стоит 1)
+        miniSquaresArray.forEach(current => {  // current square (move 2)
+            miniSquaresArray.forEach(comparing => { // comparing square (stop 1)
 
                 current_pixel = current.data.getPixel(0, 0);
 
@@ -137,41 +142,92 @@ const GenerateBase = () => {
                     for (let x = -comparing.data.width + 1; x < comparing.data.width; x++) {
                         comparing_pixel = comparing.data.getPixel(x, y);
                         same_pixel = true;
-                            for (let j = 0; j < current.data.height; j++) {
-                                for (let i = 0; i < current.data.width; i++) {
-                                    current_track_pixel = current.data.getPixel(i, j);
+                        for (let j = 0; j < current.data.height; j++) {
+                            for (let i = 0; i < current.data.width; i++) {
+                                current_track_pixel = current.data.getPixel(i, j);
 
-                                    if (!comparing.data.inBounds(i + x, j + y)) {
-                                        continue
-                                    }
+                                if (!comparing.data.inBounds(i + x, j + y)) {
+                                    continue
+                                }
 
-                                    comparing_track_pixel = comparing.data.getPixel(i + x, j + y);
+                                comparing_track_pixel = comparing.data.getPixel(i + x, j + y);
 
-                                    if (current_track_pixel[0] !== comparing_track_pixel[0] || current_track_pixel[1] !== comparing_track_pixel[1] || current_track_pixel[2] !== comparing_track_pixel[2]) {
-                                        same_pixel = false;
-                                        break
-                                    }
+                                if (current_track_pixel[0] !== comparing_track_pixel[0] || current_track_pixel[1] !== comparing_track_pixel[1] || current_track_pixel[2] !== comparing_track_pixel[2]) {
+                                    same_pixel = false;
+                                    break
                                 }
                             }
-
-                            if (same_pixel) {
-                                let indexSamePixel = ((y + comparing.data.height - 1) * (comparing.data.width * 2 - 1)) + (x + comparing.data.width - 1);
-                                comparing.samePixel[indexSamePixel].push(current.id);
-
-                            }
-                            same_pixel = false;
                         }
+
+                        if (same_pixel) {
+                            let indexSamePixel = ((y + comparing.data.height - 1) * (comparing.data.width * 2 - 1)) + (x + comparing.data.width - 1);
+                            comparing.samePixel[indexSamePixel].push(current.id);
+
+                        }
+                        same_pixel = false;
                     }
+                }
 
             })
         })
-
-        console.log(miniSquaresArray);
     }
+
+    const preGenerateImage = () => {
+        if (miniSquaresArray.length > 0) {
+            for (let i = 0; i < bmp_generate.width * bmp_generate.height; i++) {
+                preGenerateArray[i] = [];
+                miniSquaresArray.forEach(c => {
+                    preGenerateArray[i].push(c.id)
+                })
+            }
+            let random_x = getRandomId(bmp_generate.width);
+            let random_y = getRandomId(bmp_generate.height);
+
+            // let square_ids = preGenerateArray[random_y * bmp_generate.width + random_x];
+            // let random_square_id = square_ids[getRandomId(square_ids.length)];
+            // let square = miniSquaresArray[random_square_id]
+            //
+            // preGenerateArray[random_y * bmp_generate.width + random_x] = [random_square_id];
+
+            for (let y = -bmp_fixed.height + 1; y < bmp_fixed.height; y++) {
+                for (let x = -bmp_fixed.width + 1; x < bmp_fixed.width; x++) {
+
+
+                }
+            }
+
+        }
+
+    }
+
+    // const generateImage = () => {
+    //
+
+    //
+    //        for (let h = 0; h < bmp_generate.height; h++) {
+    //              for (let w=0; w < bmp_generate.width; w++) {
+    //
+    //                  if ()
+    //
+    //                  for (let y = 0; y < square.data.height; y++) {
+    //                      for (let x = 0; x < square.data.width; x++) {
+    //                          let color_array = square.data.getPixel(x, y);
+    //                          bmp_generate.setPixel(w + x,h + y, color_array);
+    //
+    //                      }
+    //                  }
+    //
+    //
+    //              }
+    //
+    //
+    // }
 
 
     createImg();
     findSameCouplePixel();
+    //generateImage();
+    preGenerateImage();
 
     return (
         <div style={{backgroundColor: 'black', width: '100vw', height: '100vh'}}>
@@ -192,7 +248,10 @@ const GenerateBase = () => {
                     return <img alt='mini squares bitmap' src={`${c.data.asBase64()}`}
                                 style={{imageRendering: 'pixelated'}}/>
                 })}
-
+                <div>
+                    <img alt='org img' src={`${bmp_generate.asBase64()}`}
+                         style={{imageRendering: 'pixelated', border: '1px solid gray'}}/>
+                </div>
                 {/*<img src={`${bmp_many.asBase64()}`} style={{imageRendering: 'pixelated'}}/>*/}
             </div>
         </div>
