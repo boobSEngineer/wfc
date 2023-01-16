@@ -6,13 +6,14 @@ function getRandomId(length: number) {
 }
 
 const GenerateBase = () => {
+
     let [sizeImg, setSizeImg] = useState<{ width: number, height: number }>({width: 100, height: 100});
     let [bitmapImg, setBitmapImg] = useState<Uint8ClampedArray>();
 
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext('2d');
 
-    const bmp_generate = new MyBitmap(10, 10);
+    const bmp_generate = new MyBitmap(30, 30);
     const bmp = new MyBitmap(sizeImg.width, sizeImg.height);
     const bmp_fixed = new MyBitmap(5, 5);
     //const bmp_many = new MyBitmap(sizeImg.width * 100, 10);
@@ -180,54 +181,63 @@ const GenerateBase = () => {
                     preGenerateArray[i].push(c.id)
                 })
             }
-            let random_x = getRandomId(bmp_generate.width);
-            let random_y = getRandomId(bmp_generate.height);
+            for (let e = 0; e < 10; e++) {
+                let random_x = getRandomId(bmp_generate.width);
+                let random_y = getRandomId(bmp_generate.height);
 
-            // let square_ids = preGenerateArray[random_y * bmp_generate.width + random_x];
-            // let random_square_id = square_ids[getRandomId(square_ids.length)];
-            // let square = miniSquaresArray[random_square_id]
-            //
-            // preGenerateArray[random_y * bmp_generate.width + random_x] = [random_square_id];
+                let square_ids = preGenerateArray[random_y * bmp_generate.width + random_x];
+                if (square_ids.length == 0) continue;
+                let random_square_id = square_ids[getRandomId(square_ids.length)];
+                let square = miniSquaresArray[random_square_id];
 
-            for (let y = -bmp_fixed.height + 1; y < bmp_fixed.height; y++) {
-                for (let x = -bmp_fixed.width + 1; x < bmp_fixed.width; x++) {
+                preGenerateArray[random_y * bmp_generate.width + random_x] = [random_square_id];
 
+                for (let y = -bmp_fixed.height + 1; y < bmp_fixed.height; y++) {
+                    for (let x = -bmp_fixed.width + 1; x < bmp_fixed.width; x++) {
+                        if (random_x + x < 0 || random_x + x >= bmp_generate.width || random_y + y < 0 || random_y + y >= bmp_generate.height) continue;
+                        let indexPG = (y + random_y) * bmp_generate.width + (x + random_x);
+                        let indexSP = ((y + bmp_fixed.height - 1) * (bmp_fixed.width * 2 - 1)) + (x + bmp_fixed.width - 1);
+                        if (square.samePixel[indexSP].length === 0) {
+                            preGenerateArray[indexPG] = [];
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log(preGenerateArray);
+    }
+
+    const generateImage = () => {
+        if (preGenerateArray.length > 0) {
+            for (let h = 0; h < bmp_generate.height; h++) {
+                for (let w = 0; w < bmp_generate.width; w++) {
+                    let indexG = h * bmp_generate.width + w;
+
+                    if (preGenerateArray[indexG].length == 0) continue;
+
+                    let square = miniSquaresArray[preGenerateArray[indexG][0]];
+
+                    for (let y = 0; y < square.data.height; y++) {
+                        for (let x = 0; x < square.data.width; x++) {
+                            let color_array = square.data.getPixel(x, y);
+                            if (!bmp_generate.inBounds(w + x, h + y)) continue;
+                            bmp_generate.setPixel(w + x, h + y, color_array);
+
+                        }
+                    }
 
                 }
             }
-
         }
 
     }
 
-    // const generateImage = () => {
-    //
-
-    //
-    //        for (let h = 0; h < bmp_generate.height; h++) {
-    //              for (let w=0; w < bmp_generate.width; w++) {
-    //
-    //                  if ()
-    //
-    //                  for (let y = 0; y < square.data.height; y++) {
-    //                      for (let x = 0; x < square.data.width; x++) {
-    //                          let color_array = square.data.getPixel(x, y);
-    //                          bmp_generate.setPixel(w + x,h + y, color_array);
-    //
-    //                      }
-    //                  }
-    //
-    //
-    //              }
-    //
-    //
-    // }
-
 
     createImg();
     findSameCouplePixel();
-    //generateImage();
     preGenerateImage();
+    generateImage();
 
     return (
         <div style={{backgroundColor: 'black', width: '100vw', height: '100vh'}}>
@@ -245,14 +255,13 @@ const GenerateBase = () => {
                 </div>
 
                 {miniSquaresArray.map(c => {
-                    return <img alt='mini squares bitmap' src={`${c.data.asBase64()}`}
+                    return <img alt='mini squares bitmap' key={c.id} src={`${c.data.asBase64()}`}
                                 style={{imageRendering: 'pixelated'}}/>
                 })}
                 <div>
                     <img alt='org img' src={`${bmp_generate.asBase64()}`}
                          style={{imageRendering: 'pixelated', border: '1px solid gray'}}/>
                 </div>
-                {/*<img src={`${bmp_many.asBase64()}`} style={{imageRendering: 'pixelated'}}/>*/}
             </div>
         </div>
     )
