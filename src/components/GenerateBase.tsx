@@ -46,6 +46,8 @@ function getRandomId(length: number) {
 
 const GenerateBase = () => {
 
+    let size_square = 5;
+
     let [sizeImg, setSizeImg] = useState<{ width: number, height: number }>({width: 100, height: 100});
     let [bitmapImg, setBitmapImg] = useState<Uint8ClampedArray>();
 
@@ -54,7 +56,7 @@ const GenerateBase = () => {
 
     const bmp_generate = new MyBitmap(30, 30);
     const bmp = new MyBitmap(sizeImg.width, sizeImg.height);
-    const bmp_fixed = new MyBitmap(5, 5);
+    const bmp_fixed = new MyBitmap(size_square, size_square);
     //const bmp_many = new MyBitmap(sizeImg.width * 100, 10);
 
 
@@ -123,7 +125,6 @@ const GenerateBase = () => {
             // }
 
             //org bmp -> many mini bmp
-            let size_square = 5;
             let squares_width = bmp.width - bmp_fixed.width + 1;
             let squares_height = bmp.height - bmp_fixed.height + 1;
             let counter = 0;
@@ -238,7 +239,7 @@ const GenerateBase = () => {
                 delete candidates[`${next_index}`];
 
 
-                let square_ids = preGenerateArray[random_x * bmp_generate.width + random_y];
+                let square_ids = preGenerateArray[random_y * bmp_generate.width + random_x];
                 if (square_ids.length !== 0) {
                     let random_square_id = square_ids[getRandomId(square_ids.length)];
                     let square = miniSquaresArray[random_square_id];
@@ -267,14 +268,19 @@ const GenerateBase = () => {
         if (preGenerateArray.length > 0) {
             for (let h = 0; h < bmp_generate.height; h++) {
                 for (let w = 0; w < bmp_generate.width; w++) {
+                    bmp_generate.setPixel(w, h, [0, 0, 0, 1]);
+                }
+            }
+            for (let h = 0; h < bmp_generate.height; h++) {
+                for (let w = 0; w < bmp_generate.width; w++) {
                     let indexG = h * bmp_generate.width + w;
 
                     if (preGenerateArray[indexG].length == 0) continue;
 
                     let square = miniSquaresArray[preGenerateArray[indexG][0]];
 
-                    for (let y = 0; y < 1; y++) {
-                        for (let x = 0; x < 1; x++) {
+                    for (let y = 0; y < square.data.height; y++) {
+                        for (let x = 0; x < square.data.width; x++) {
                             let color_array = square.data.getPixel(x, y);
                             if (!bmp_generate.inBounds(w + x, h + y)) continue;
                             bmp_generate.setPixel(w + x, h + y, color_array);
