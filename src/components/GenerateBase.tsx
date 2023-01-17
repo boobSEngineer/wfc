@@ -1,5 +1,44 @@
 import React, {useState} from "react";
 import {MyBitmap} from "./MyBitmap";
+import {Simulate} from "react-dom/test-utils";
+import wheel = Simulate.wheel;
+
+
+let minArray = (a:  {[k : string] : boolean}, b: number[][]): number => {
+    let k = -1;
+    let s = 0;
+    for (let i in a) {
+        if (k === -1) {
+            k = parseInt(i);
+        }
+        if (b[k].length > b[parseInt(i)].length) {
+            k = parseInt(i);
+        }
+        s++;
+    }
+    return k
+}
+
+let intersectArray = (array1 : number[], array2: number[]): number[] => {
+    let g = [];
+    let j = 0;
+    let i = 0;
+    while (i < array1.length && j < array2.length) {
+        if (array1[i] > array2[j]) {
+            j++;
+        }
+        if (array1[i] < array2[j]) {
+            i++;
+        }
+        if (array1[i] - array2 [j] === 0) {
+            g.push(array1[i]);
+            i++;
+            j++;
+        }
+    }
+
+    return g;
+}
 
 function getRandomId(length: number) {
     return Math.floor(Math.random() * length);
@@ -181,31 +220,47 @@ const GenerateBase = () => {
                     preGenerateArray[i].push(c.id)
                 })
             }
-            for (let e = 0; e < 10; e++) {
-                let random_x = getRandomId(bmp_generate.width);
-                let random_y = getRandomId(bmp_generate.height);
+            let candidates: {[k : string] : boolean} = {};
+            let reserved: {[k : string] : boolean} = {};
+            let first_random_x = getRandomId(bmp_generate.width);
+            let first_random_y = getRandomId(bmp_generate.height);
 
-                let square_ids = preGenerateArray[random_y * bmp_generate.width + random_x];
-                if (square_ids.length == 0) continue;
-                let random_square_id = square_ids[getRandomId(square_ids.length)];
-                let square = miniSquaresArray[random_square_id];
+            candidates[`${first_random_y * bmp_generate.width + first_random_x}`] = true;
 
-                preGenerateArray[random_y * bmp_generate.width + random_x] = [random_square_id];
+            while (true) {
+                let next_index = minArray(candidates, preGenerateArray);
+                if (next_index === -1) break;
+                let random_x = next_index % bmp_generate.width;
+                let random_y = Math.floor(next_index / bmp_generate.width);
+                console.log({random_x, random_y})
 
-                for (let y = -bmp_fixed.height + 1; y < bmp_fixed.height; y++) {
-                    for (let x = -bmp_fixed.width + 1; x < bmp_fixed.width; x++) {
-                        if (random_x + x < 0 || random_x + x >= bmp_generate.width || random_y + y < 0 || random_y + y >= bmp_generate.height) continue;
-                        let indexPG = (y + random_y) * bmp_generate.width + (x + random_x);
-                        let indexSP = ((y + bmp_fixed.height - 1) * (bmp_fixed.width * 2 - 1)) + (x + bmp_fixed.width - 1);
-                        if (square.samePixel[indexSP].length === 0) {
-                            preGenerateArray[indexPG] = [];
+                reserved[`${next_index}`] = true;
+                delete candidates[`${next_index}`];
+
+
+                let square_ids = preGenerateArray[random_x * bmp_generate.width + random_y];
+                if (square_ids.length !== 0) {
+                    let random_square_id = square_ids[getRandomId(square_ids.length)];
+                    let square = miniSquaresArray[random_square_id];
+
+                    preGenerateArray[random_y * bmp_generate.width + random_x] = [random_square_id];
+                    for (let y = -bmp_fixed.height + 1; y < bmp_fixed.height; y++) {
+                        for (let x = -bmp_fixed.width + 1; x < bmp_fixed.width; x++) {
+                            if (random_x + x < 0 || random_x + x >= bmp_generate.width || random_y + y < 0 || random_y + y >= bmp_generate.height) continue;
+                            let indexPG = (y + random_y) * bmp_generate.width + (x + random_x);
+                            let indexSP = ((y + bmp_fixed.height - 1) * (bmp_fixed.width * 2 - 1)) + (x + bmp_fixed.width - 1);
+                            if (!reserved[`${indexPG}`]) {
+                                let intersect_array = intersectArray(square.samePixel[indexSP], preGenerateArray[indexPG]);
+                                preGenerateArray[indexPG] = intersect_array;
+                                candidates[`${indexPG}`] = true;
+                            }
                         }
                     }
                 }
+
             }
         }
-
-        console.log(preGenerateArray);
+        //console.log(preGenerateArray);
     }
 
     const generateImage = () => {
@@ -218,8 +273,8 @@ const GenerateBase = () => {
 
                     let square = miniSquaresArray[preGenerateArray[indexG][0]];
 
-                    for (let y = 0; y < square.data.height; y++) {
-                        for (let x = 0; x < square.data.width; x++) {
+                    for (let y = 0; y < 1; y++) {
+                        for (let x = 0; x < 1; x++) {
                             let color_array = square.data.getPixel(x, y);
                             if (!bmp_generate.inBounds(w + x, h + y)) continue;
                             bmp_generate.setPixel(w + x, h + y, color_array);
@@ -256,7 +311,7 @@ const GenerateBase = () => {
 
                 {miniSquaresArray.map(c => {
                     return <img alt='mini squares bitmap' key={c.id} src={`${c.data.asBase64()}`}
-                                style={{imageRendering: 'pixelated'}}/>
+                                style={{imageRendering: 'pixelated',  border: '1px solid black'}}/>
                 })}
                 <div>
                     <img alt='org img' src={`${bmp_generate.asBase64()}`}
